@@ -1,0 +1,16 @@
+services:
+  # ── 실습실: 아무것도 설치되지 않은 맨 우분투 리눅스 ──────
+  # 수강생이 이 안에 들어가 체크리스트 1~10번을 직접 설치/검증합니다.
+  lab:
+    image: ubuntu:22.04
+    container_name: bigdata-lab
+    hostname: bigdata-lab
+    command: sleep infinity     # 컨테이너를 계속 살려두는 대기 명령
+    tty: true
+    ports:
+      - "8888:8888"   # JupyterLab
+      - "4040:4040"   # Spark UI
+    volumes:
+      - ./work:/root/work       # 노트북/requirements.txt가 내 PC에도 남도록 공유
+    environment:
+      - TZ=Asia/Seoul

@@ -1,0 +1,76 @@
+services:
+  # ── 원천 1: MySQL — 회원/주문 데이터 (JDBC 실습용, 지저분한 데이터 포함) ──
+  mysql:
+    image: mysql:8.0
+    container_name: shop-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root123
+      - MYSQL_DATABASE=shop
+      - MYSQL_USER=analyst
+      - MYSQL_PASSWORD=analyst123
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql-init:/docker-entrypoint-initdb.d   # 최초 기동 시 더티 데이터 자동 적재
+    networks:
+      - etl-network
+
+  # ── 원천 2: REST API — 매출 데이터 (파이썬 표준 라이브러리만 사용) ──
+  sales-api:
+    image: python:3.11-slim
+    container_name: sales-api
+    command: python /app/api.py
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./api:/app
+    networks:
+      - etl-network
+
+  # ── 원천 3: 데이터 레이크 — MinIO (S3 호환, s3a:// 실습용) ──
+  minio:
+    image: minio/minio:latest
+    container_name: datalake-minio
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=minio12345
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # 웹 콘솔 (버킷을 눈으로 확인)
+    networks:
+      - etl-network
+
+  # ── 버킷 초기화: my-datalake 버킷을 만들고 종료되는 1회성 작업 ──
+  minio-setup:
+    image: minio/mc:latest
+    container_name: minio-setup
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      mc alias set lake http://minio:9000 admin minio12345;
+      mc mb --ignore-existing lake/my-datalake;
+      echo '버킷 my-datalake 준비 완료';
+      exit 0"
+    networks:
+      - etl-network
+
+  # ── 분석 환경: JupyterLab + PySpark ──
+  jupyter:
+    image: jupyter/pyspark-notebook:spark-3.5.0
+    container_name: jupyter-etl
+    ports:
+      - "8888:8888"
+      - "4040:4040"   # Spark UI
+    environment:
+      - JUPYTER_TOKEN=spark
+    volumes:
+      - ./notebooks:/home/jovyan/work
+    networks:
+      - etl-network
+
+networks:
+  etl-network:
+    driver: bridge

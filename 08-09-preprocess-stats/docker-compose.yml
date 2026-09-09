@@ -1,0 +1,14 @@
+services:
+  # ── 분석 환경: JupyterLab + PySpark (로컬 모드) ──
+  # 이번 실습은 원천 시스템 없이 CSV 파일 하나로 진행되므로 컨테이너 하나면 충분합니다.
+  jupyter:
+    image: jupyter/pyspark-notebook:spark-3.5.0
+    container_name: jupyter-cafe
+    ports:
+      - "8888:8888"
+      - "4040:4040"   # Spark UI
+    environment:
+      - JUPYTER_TOKEN=spark
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./data:/home/jovyan/work/data

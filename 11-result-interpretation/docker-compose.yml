@@ -1,0 +1,13 @@
+version: "3"
+
+services:
+  jupyter:
+    image: jupyter/pyspark-notebook:spark-3.5.0
+    container_name: jupyter-interpretation
+    ports:
+      - "8888:8888"
+      - "4040:4040"
+    environment:
+      - JUPYTER_TOKEN=interpret
+    volumes:
+      - ./notebooks:/home/jovyan/work

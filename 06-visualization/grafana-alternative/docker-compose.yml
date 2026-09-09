@@ -1,0 +1,32 @@
+name: cafe-dashboard-alternative
+
+services:
+  # export/ 폴더의 CSV를 그냥 HTTP로 서빙만 합니다 (별도 설치 없이 표준 라이브러리만 사용)
+  csv-server:
+    image: python:3.11-slim
+    container_name: csv-server
+    working_dir: /data
+    command: python -m http.server 8000
+    volumes:
+      - ../export:/data
+    networks:
+      - viz-network
+
+  # Power BI/Tableau가 없을 때의 무료 대안
+  # (Grafana의 예전 CSV 플러그인은 지원 종료 예정이라, 공식 권장 후속인
+  #  Infinity 데이터소스로 CSV를 HTTP를 통해 불러옵니다)
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana-viz
+    environment:
+      - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./provisioning:/etc/grafana/provisioning
+    networks:
+      - viz-network
+
+networks:
+  viz-network:
+    driver: bridge
