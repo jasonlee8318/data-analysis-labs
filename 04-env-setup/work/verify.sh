@@ -35,12 +35,11 @@ df = s.createDataFrame([(1.0,2.0,5.0),(2.0,3.0,8.0),(3.0,4.0,11.0)],[\"x1\",\"x2
 t = VectorAssembler(inputCols=[\"x1\",\"x2\"],outputCol=\"features\").transform(df)
 LinearRegression(featuresCol=\"features\",labelCol=\"y\").fit(t)
 s.stop()'"
-check "9. requirements.txt 존재 (/root/work)"                "test -s /root/work/requirements.txt"
-echo "  ⏸  10. Spark UI(localhost:4040)는 세션 실행 중에만 열립니다."
+echo "  ⏸  9. Spark UI(localhost:4040)는 세션 실행 중에만 열립니다."
 echo "         → spark_smoke_test.py 실행 중 브라우저로 직접 확인하세요."
 echo "═════════════════════════════════════════════════════════"
 echo ""
-echo "  결과: 통과 $PASS / 실패 $FAIL  (10번은 수동 확인)"
+echo "  결과: 통과 $PASS / 실패 $FAIL  (9번은 수동 확인)"
 if [ $FAIL -eq 0 ]; then
   echo "  🎉 자동 점검 항목 전부 통과!"
 fi

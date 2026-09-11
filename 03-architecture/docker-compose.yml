@@ -1,0 +1,12 @@
+name: architecture-pipeline-lab
+
+services:
+  pipeline:
+    build: .
+    container_name: pipeline-lab
+    volumes:
+      - .:/app   # 01~04번 스크립트와 data 폴더를 그대로 컨테이너와 공유
+    ports:
+      - "8501:8501"   # Streamlit
+    stdin_open: true
+    tty: true

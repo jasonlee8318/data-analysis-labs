@@ -22,8 +22,10 @@
 ### 1-1. 환경 계열 (3·4·5회차)
 
 ```bash
-cd ../03-architecture && pip install -r requirements.txt --break-system-packages
-python 01_collect.py && python 02_process.py && python 03_analyze.py
+cd ../03-architecture && docker compose up -d --build
+docker compose exec pipeline python 01_collect.py
+docker compose exec pipeline python 02_process.py
+docker compose exec pipeline python 03_analyze.py
 ```
 - [ ] `data/processed/customer_analysis.csv`가 정상 생성되는가?
 - [ ] `customer_group`(0/1/2) 3개 그룹이 모두 나오는가?
@@ -35,11 +37,11 @@ cd ../04-env-setup && ./lab.sh start && ./lab.sh shell
 - [ ] SparkSession/DataFrame/MLlib 스모크 테스트가 여전히 통과하는가?
 
 ```bash
-cd ../05-etl && docker compose up -d
-# Jupyter에서 etl_lab.ipynb 1~3번 셀 실행
+cd ../05-etl && docker compose up -d --build
+# localhost:8081 → Connections 3개 등록 확인 → cafe_shop_etl Trigger DAG
 ```
-- [ ] MySQL/API/S3 세 원천에서 정상적으로 데이터를 가져오는가?
-- [ ] 최종 `member_summary`가 MinIO에 적재되는가?
+- [ ] MySQL/API/S3 세 원천에서 정상적으로 데이터를 가져오는가? (각 Task 로그 확인)
+- [ ] 최종 `member_summary_airflow`가 MinIO에 적재되는가?
 
 ### 1-2. 전처리 → 시각화 (실제로 이어지는 파이프라인) — 8회차 → 6회차
 
@@ -52,10 +54,10 @@ cd ../08-09-preprocess-stats && docker compose up -d
 
 cd ../06-visualization/export && python3 export_summary.py
 ```
-- [ ] 6회차에서 나온 `cafe_dashboard_data.csv`의 행 수·집계 값이 8회차
-      노트북에서 확인한 정제 결과와 일관되는가? (예: 이상치로 제거된
-      매출 건이 6회차 집계에도 반영되어 있는지)
-- [ ] Power BI/Tableau 또는 Grafana 대안에서 대시보드가 정상적으로
+- [ ] 6회차에서 나온 `cafe_sales_clean.csv`의 행 수(341행)가 8회차
+      노트북에서 확인한 정제 결과(결측·중복·이상치 제거 후 건수)와
+      비슷한 규모인지
+- [ ] Power BI에서 대시보드가 정상적으로
       뜨는가?
 
 ### 1-3. 모델링 계열 (10·11강)

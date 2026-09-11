@@ -185,7 +185,8 @@ head /root/work/requirements.txt
 bash /root/work/verify.sh
 ```
 
-1~9번을 자동으로 채점해 ✅/❌로 보여줍니다. 전부 ✅면 완료!
+1~8번을 자동으로 채점해 ✅/❌로 보여줍니다(9번 Spark UI는 세션 실행
+중에만 열리므로 수동 확인). 1~8번이 전부 ✅면 완료!
 
 ---
 

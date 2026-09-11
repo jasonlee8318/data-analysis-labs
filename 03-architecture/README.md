@@ -21,23 +21,29 @@
 
 ```bash
 cd 03-architecture
-pip install -r requirements.txt --break-system-packages
+docker compose up -d --build
 ```
 
-(도커 없이 로컬 파이썬으로 바로 진행합니다 — 무거운 환경 없이 4계층
-구조 자체에 집중하기 위해서입니다.)
+호스트 PC의 Python 버전이나 `pip` 상태에 상관없이, 컨테이너 안에
+`pandas`/`scikit-learn`/`streamlit`이 미리 설치된 채로 뜹니다 — 이
+과정의 다른 회차들과 동일한 방식입니다.
 
 ## 실행 순서
 
 ```bash
-python 01_collect.py       # 1. 수집 — 가상 고객 행동 로그 1,000건 생성
-python 02_process.py       # 2. 처리 — 고객 단위 집계 + activity_score 파생
-python 03_analyze.py       # 3. 분석 — K-Means로 고객을 3개 그룹으로 분류
-streamlit run 04_dashboard.py   # 4. 시각화 — 브라우저 대시보드
+docker compose exec pipeline python 01_collect.py       # 1. 수집 — 가상 고객 행동 로그 1,000건 생성
+docker compose exec pipeline python 02_process.py       # 2. 처리 — 고객 단위 집계 + activity_score 파생
+docker compose exec pipeline python 03_analyze.py       # 3. 분석 — K-Means로 고객을 3개 그룹으로 분류
+docker compose exec pipeline streamlit run 04_dashboard.py --server.address 0.0.0.0   # 4. 시각화
 ```
 
-`04_dashboard.py`를 실행하면 브라우저에서 자동으로 열리거나,
-안 열리면 터미널에 뜨는 `Local URL`(보통 http://localhost:8501)로 접속하세요.
+마지막 줄 실행 후 브라우저에서 http://localhost:8501 접속하세요.
+(`--server.address 0.0.0.0`이 없으면 컨테이너 안에서만 열려서
+호스트 브라우저로 접속이 안 됩니다.)
+
+`data/` 폴더는 호스트와 공유되어(volume mount), 컨테이너 안에서
+생성된 CSV를 호스트 PC의 `03-architecture/data/`에서도 바로 확인할
+수 있습니다.
 
 ## 각 단계에서 확인할 것
 
@@ -64,8 +70,8 @@ streamlit run 04_dashboard.py   # 4. 시각화 — 브라우저 대시보드
 ## 데이터 변화를 직접 확인하기
 
 ```bash
-wc -l data/raw/customer_log.csv          # 1,000건 (원시 이벤트)
-wc -l data/processed/customer.csv        # 100건 안팎 (고객 단위로 집계)
+docker compose exec pipeline wc -l data/raw/customer_log.csv          # 1,000건 (원시 이벤트)
+docker compose exec pipeline wc -l data/processed/customer.csv        # 100건 안팎 (고객 단위로 집계)
 ```
 
 1,000건의 Raw Event가 → 고객 단위 데이터 → 고객 행동 Feature →
@@ -81,14 +87,18 @@ wc -l data/processed/customer.csv        # 100건 안팎 (고객 단위로 집�
 
 ## 자주 겪는 문제
 
+- **`ModuleNotFoundError: No module named 'sklearn'`** → 호스트에서
+  바로 `python`을 실행하신 경우입니다. 반드시 `docker compose exec
+  pipeline python ...`처럼 컨테이너 안에서 실행하세요
 - **02_process.py에서 파일을 못 찾음** → 반드시 01_collect.py를 먼저
   실행해 `data/raw/customer_log.csv`를 만들어야 합니다
-- **Streamlit이 브라우저를 자동으로 못 엶** → 터미널에 출력된
-  `Local URL`을 직접 복사해서 열면 됩니다
-- **포트 충돌(8501)** → `streamlit run 04_dashboard.py --server.port 8502`
-  처럼 포트를 지정해 실행
+- **브라우저에서 localhost:8501 접속이 안 됨** → `streamlit run` 뒤에
+  `--server.address 0.0.0.0`을 빠뜨리지 않았는지 확인
+- **포트 충돌(8501)** → `docker-compose.yml`의 `"8501:8501"`에서
+  왼쪽 포트만 변경(예: `"8502:8501"`) 후 `docker compose up -d --build`
 - **다시 처음부터** → `data/raw`, `data/processed` 안의 CSV 파일만
-  지우고 01번부터 다시 실행하면 됩니다
+  지우고 01번부터 다시 실행하면 됩니다 (컨테이너 자체는 그대로 둬도 됨)
+- **전체 초기화** → `docker compose down` 후 `docker compose up -d --build`
 
 ## 심화 — 엣지컴퓨팅형 구조로 확장하고 싶다면
 

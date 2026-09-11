@@ -57,19 +57,25 @@ services:
     networks:
       - etl-network
 
-  # ── 분석 환경: JupyterLab + PySpark ──
-  jupyter:
-    image: jupyter/pyspark-notebook:spark-3.5.0
-    container_name: jupyter-etl
+  # ── ETL 오케스트레이션: Airflow ──
+  # SequentialExecutor + SQLite 기반 경량 단일 컨테이너입니다.
+  # 최초 기동 시 관리자 계정 비밀번호를 자동 생성하는데,
+  # 컨테이너 안 /opt/airflow/standalone_admin_password.txt에 저장됩니다:
+  #   docker compose exec airflow cat /opt/airflow/standalone_admin_password.txt
+  airflow:
+    build: ./airflow
+    container_name: etl-airflow
+    command: standalone
     ports:
-      - "8888:8888"
-      - "4040:4040"   # Spark UI
-    environment:
-      - JUPYTER_TOKEN=spark
+      - "8081:8080"
     volumes:
-      - ./notebooks:/home/jovyan/work
+      - ./airflow/dags:/opt/airflow/dags
     networks:
       - etl-network
+    depends_on:
+      - mysql
+      - sales-api
+      - minio-setup
 
 networks:
   etl-network:
